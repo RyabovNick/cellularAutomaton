@@ -6,57 +6,11 @@
       </v-flex>
 
       <v-flex mb-4>
-        <h1 class="display-2 font-weight-bold mb-3">Welcome to Vuetify</h1>
-        <p class="subheading font-weight-regular">
-          For help and collaboration with other Vuetify developers,
-          <br />please join our online
-          <a
-            href="https://community.vuetifyjs.com"
-            target="_blank"
-          >Discord Community</a>
-        </p>
-      </v-flex>
-
-      <v-flex mb-5 xs12>
-        <h2 class="headline font-weight-bold mb-3">What's next?</h2>
-
-        <v-layout justify-center>
-          <a
-            v-for="(next, i) in whatsNext"
-            :key="i"
-            :href="next.href"
-            class="subheading mx-3"
-            target="_blank"
-          >{{ next.text }}</a>
-        </v-layout>
-      </v-flex>
-
-      <v-flex xs12 mb-5>
-        <h2 class="headline font-weight-bold mb-3">Important Links</h2>
-
-        <v-layout justify-center>
-          <a
-            v-for="(link, i) in importantLinks"
-            :key="i"
-            :href="link.href"
-            class="subheading mx-3"
-            target="_blank"
-          >{{ link.text }}</a>
-        </v-layout>
-      </v-flex>
-
-      <v-flex xs12 mb-5>
-        <h2 class="headline font-weight-bold mb-3">Ecosystem</h2>
-
-        <v-layout justify-center>
-          <a
-            v-for="(eco, i) in ecosystem"
-            :key="i"
-            :href="eco.href"
-            class="subheading mx-3"
-            target="_blank"
-          >{{ eco.text }}</a>
-        </v-layout>
+        <h1 class="display-2 font-weight-bold mb-3">Клеточный автомат</h1>
+        <v-btn @click="runCellular">Запустить</v-btn>
+        <div class="life"></div>
+        <div class="next"></div>
+        <p>generation <span class="generation">0</span>, <a href="#" @click="seed()">seed</a></p>
       </v-flex>
     </v-layout>
   </v-container>
@@ -64,61 +18,132 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { Tracer, Array2DTracer, Layout, VerticalLayout } from 'algorithm-visualizer'
 
 export default Vue.extend({
   name: 'HelloWorld',
 
   data: () => ({
-    ecosystem: [
-      {
-        text: 'vuetify-loader',
-        href: 'https://github.com/vuetifyjs/vuetify-loader'
-      },
-      {
-        text: 'github',
-        href: 'https://github.com/vuetifyjs/vuetify'
-      },
-      {
-        text: 'awesome-vuetify',
-        href: 'https://github.com/vuetifyjs/awesome-vuetify'
+    generation: 0,
+    seed: false,
+    x: 10,
+    y: 10,
+    speed: 500,
+  }),
+  methods: {
+    /**
+     * Ячейка с менее чем 2 соседями умирает
+     */
+    isUnderPopulated(c: number) {
+      return c < 2
+    },
+    /**
+     * Ячейка с 2 или 3 соседями остаётся жить
+     */
+    isHealthy(c: number) {
+      return c === 2 || c === 3
+    },
+    /**
+     * Ячейка с более 3 умирает
+     */
+    isOverPopulated(c: number) {
+      return c > 3
+    },
+    /**
+     * Мёртвая ячейка с 3 соседями оживает
+     */
+    isBorn(c: number) {
+      return c === 3
+    },
+    makeGrid(x: number, y: number) {
+      var out = ''
+      for (var iy = y - 1; iy >= 0; iy--) {
+        var cells = ''
+        for (var ix = x - 1; ix >= 0; ix--) {
+          var className = 'x' + ix + 'y' + iy
+          cells += this.makeCell(className)
+        }
+        out += this.makeRow(cells)
       }
-    ],
-    importantLinks: [
-      {
-        text: 'Documentation',
-        href: 'https://vuetifyjs.com'
-      },
-      {
-        text: 'Chat',
-        href: 'https://community.vuetifyjs.com'
-      },
-      {
-        text: 'Made with Vuetify',
-        href: 'https://madewithvuejs.com/vuetify'
-      },
-      {
-        text: 'Twitter',
-        href: 'https://twitter.com/vuetifyjs'
-      },
-      {
-        text: 'Articles',
-        href: 'https://medium.com/vuetify'
+      return out
+    },
+    makeRow(cells: string) {
+      return '<div class="cell-row">' + cells + '</div>'
+    },
+    makeCell(className: string) {
+      return '<div class="cell ' + className + '" data-toggle="0">.</div>'
+    },
+    coinFlip() {
+      return Math.floor(Math.random() * 2) == 0
+    },
+    toggle(x, y, el = 'life') {
+      var cell = document.getElementsByClassName(el)[0].getElementsByClassName('x' + x + 'y' + y)[0]
+      cell.dataset.toggle = cell.dataset.toggle == '0' ? '1' : '0'
+    },
+    isLive(x, y) {
+      var cell = document
+        .getElementsByClassName('life')[0]
+        .getElementsByClassName('x' + x + 'y' + y)[0]
+      if (cell === null) {
+        return false
       }
-    ],
-    whatsNext: [
-      {
-        text: 'Explore components',
-        href: 'https://vuetifyjs.com/components/api-explorer'
-      },
-      {
-        text: 'Select a layout',
-        href: 'https://vuetifyjs.com/layout/pre-defined'
-      },
-      {
-        text: 'Frequently Asked Questions',
-        href: 'https://vuetifyjs.com/getting-started/frequently-asked-questions'
-      }
-    ]
-  })
+      return cell.dataset.toggle == 1 ? true : false
+    },
+    getNeighbors(x, y) {
+      n = y != config.y - 1 // has northern neighbors
+      e = x != 0 // has eastern neighbors
+      s = y != 0 // has southern neighbors
+      w = x != config.x - 1 // has western neighbors
+      count = 0
+      if (n && isLive(x, y + 1)) count++
+      if (n && e && isLive(x - 1, y + 1)) count++
+      if (e && isLive(x - 1, y)) count++
+      if (s && e && isLive(x - 1, y - 1)) count++
+      if (s && isLive(x, y - 1)) count++
+      if (s && w && isLive(x + 1, y - 1)) count++
+      if (w && isLive(x + 1, y)) count++
+      if (n && w && isLive(x + 1, y + 1)) count++
+      return count
+    },
+  },
 })
 </script>
+
+<style scoped>
+.life {
+  width: 100%;
+  height: 100%;
+  margin: 0 auto 1rem auto;
+  display: block;
+}
+
+.cell {
+  font-size: 64px;
+  line-height: 0px;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  padding: 0;
+  float: left;
+}
+
+.cell[data-toggle='0'] {
+  color: #ffffff;
+}
+
+.cell[data-toggle='1'] {
+  color: #0687f5;
+}
+
+.cell-row {
+  height: 20px;
+}
+
+.next {
+  display: none;
+}
+
+body {
+  font-family: sans-serif;
+}
+</style>
