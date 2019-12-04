@@ -6,11 +6,11 @@ enum Dwellers {
   lumberjack = 'lumberjack',
 }
 
-class Forest {
+export class Forest {
   size: number
   month: number
   grid: Grid[]
-  dwellersCount!: DwellersCount
+  dwellersCount: DwellersCount
   lumber: number
   maws: number
   timer: any
@@ -21,9 +21,11 @@ class Forest {
     this.size = n
     this.month = 1
     this.grid = []
-    this.dwellersCount.bear = 0
-    this.dwellersCount.lumberjack = 0
-    this.dwellersCount.tree = 0
+    this.dwellersCount = {
+      bear: 0,
+      lumberjack: 0,
+      tree: 0,
+    }
     for (let i = 0; i < n * n; i++) {
       this.grid.push({
         tree: 0,
@@ -80,7 +82,7 @@ class Forest {
 
   stepBear(x: number, y: number) {
     let cell = this.get(x, y)
-    for (var i = 0; i < 5; i++) {
+    for (let i = 0; i < 5; i++) {
       const dir = this.random()
       x = x + dir.x
       y = y + dir.y
@@ -113,7 +115,9 @@ class Forest {
           return this
         } else if (cell.tree >= 12) {
           this.lumber += 1
-          if (cell.tree >= 120) this.lumber += 1
+          if (cell.tree >= 120) {
+            this.lumber += 1
+          }
           cell.tree = 0
           this.dwellersCount.tree--
         }
@@ -127,7 +131,7 @@ class Forest {
     const chance = cell.tree < 12 ? 0 : cell.tree >= 120 ? 0.2 : 0.1
     if (Math.random() < chance) {
       const avail = this.DIRECTIONS.filter(d => {
-        return this.get(x + d.x, y + d.y).tree == 0
+        return this.get(x + d.x, y + d.y).tree === 0
       })
       if (avail.length > 0) {
         this.dwellersCount.tree++
@@ -140,11 +144,11 @@ class Forest {
   }
 
   all(type: Dwellers) {
-    var all = []
+    const all = []
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
         if (this.get(x, y)[type]) {
-          all.push({ x: x, y: y })
+          all.push({ x, y })
         }
       }
     }
@@ -153,9 +157,9 @@ class Forest {
 
   add(type: Dwellers, value: number = 1) {
     while (true) {
-      const x = Math.floor(Math.random() * this.size),
-        y = Math.floor(Math.random() * this.size),
-        cell = this.get(x, y)
+      const x = Math.floor(Math.random() * this.size)
+      const y = Math.floor(Math.random() * this.size)
+      const cell = this.get(x, y)
       if (!cell[type]) {
         cell[type] = value
         this.dwellersCount[type]++
@@ -187,7 +191,9 @@ class Forest {
       this.remove(Dwellers.lumberjack)
     } else {
       let count = Math.ceil(diff / 10)
-      while (count-- > 0) this.add(Dwellers.lumberjack)
+      while (count-- > 0) {
+        this.add(Dwellers.lumberjack)
+      }
     }
     this.lumber = 0
     return this
@@ -196,7 +202,7 @@ class Forest {
   step() {
     for (let y = 0; y < this.size; y++) {
       for (let x = 0; x < this.size; x++) {
-        let cell = this.get(x, y)
+        const cell = this.get(x, y)
         if (cell.tree > 0) {
           cell.tree++
         }
@@ -211,7 +217,7 @@ class Forest {
         }
       }
     }
-    if (this.month % 12 == 0) {
+    if (this.month % 12 === 0) {
       this.callbacks.forEach(c => {
         c()
       })
@@ -256,6 +262,7 @@ class Forest {
   start(speed: number = 100) {
     if (this.timer == null) {
       this.timer = setInterval(() => {
+        this.step()
         // this.step().draw()
       }, speed)
     }
