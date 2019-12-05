@@ -1,21 +1,9 @@
 <template>
   <v-container>
     <v-layout text-center wrap>
-      <v-flex xs12>
-        <v-img
-          :src="require('../assets/logo.svg')"
-          class="my-3"
-          contain
-          height="200"
-        ></v-img>
-      </v-flex>
-
       <v-flex mb-4>
         <h1 class="display-2 font-weight-bold mb-3">Лес</h1>
-        <div class="life"></div>
-        <div class="next"></div>
         <p>
-          generation
           <span
             class="generation"
           >{{ forest.dwellersCount}} {{forest.maws}} {{forest.lumber}} {{forest.month}}</span>,
@@ -25,12 +13,24 @@
         <p>{{ forest.size }}</p>
 
         <v-container>
-          <div v-for="(tr, key) in forest.size" :key="key">
+          <div
+            v-for="(tr, x) in forest.size"
+            :key="x"
+            :style="{
+              height: Math.round((windowWidth-200)/forest.size) + 'px'
+            }"
+          >
             <div
-              v-for="(td, keyTd) in forest.size"
-              :key="keyTd"
+              v-for="(td, y) in forest.size"
+              :key="y"
               class="square"
-              :style="{width: Math.round((windowWidth-100)/forest.size) + 'px', height: Math.round((windowWidth-100)/forest.size) + 'px'}"
+              :style="{
+                width: Math.round((windowWidth-200)/forest.size) + 'px',
+                height: Math.round((windowWidth-200)/forest.size) + 'px',
+                'background-image': getBackgroundImage(x,y),
+                'background-size': 'auto',
+                //'background-color': getColorForCell(x, y),
+              }"
             ></div>
           </div>
         </v-container>
@@ -51,7 +51,7 @@ export default Vue.extend({
     x: 10,
     y: 10,
     speed: 500,
-    forest: new Forest(10),
+    forest: new Forest(20),
     windowWidth: 0,
   }),
   created() {
@@ -67,7 +67,39 @@ export default Vue.extend({
         this.forest.timer = setInterval(() => {
           this.forest.step()
           // this.step().draw()
-        }, 100)
+        }, 800)
+      }
+    },
+    getColorForCell(x: number, y: number): string {
+      const cell = this.forest.get(x, y)
+      if (cell.lumberjack) {
+        return '#f00'
+      } else if (cell.bear) {
+        return '#872'
+      } else if (cell.tree >= 120) {
+        return '#0a0'
+      } else if (cell.tree >= 12) {
+        return '#0d0'
+      } else if (cell.tree > 0) {
+        return '#7f0'
+      } else {
+        return 'grey'
+      }
+    },
+    getBackgroundImage(x: number, y: number) {
+      const cell = this.forest.get(x, y)
+      if (cell.lumberjack) {
+        return `url(${require('../assets/lumberjack_icon1.svg')})`
+      } else if (cell.bear) {
+        return `url(${require('../assets/bear_icon.svg')})`
+      } else if (cell.tree >= 120) {
+        return `url(${require('../assets/tree22.svg')})`
+      } else if (cell.tree >= 12) {
+        return `url(${require('../assets/tree11.svg')})`
+      } else if (cell.tree > 0) {
+        return `url(${require('../assets/tree00.svg')})`
+      } else {
+        return
       }
     },
   },
@@ -76,42 +108,8 @@ export default Vue.extend({
 
 <style scoped>
 .square {
-  background: red;
-  margin: 1px;
+  margin: 0.5px;
   display: -webkit-inline-box;
-}
-
-.life {
-  width: 100%;
-  height: 100%;
-  margin: 0 auto 1rem auto;
-  display: block;
-}
-
-.cell {
-  font-size: 64px;
-  line-height: 0px;
-  width: 20px;
-  height: 20px;
-  margin: 0;
-  padding: 0;
-  float: left;
-}
-
-.cell[data-toggle='0'] {
-  color: #ffffff;
-}
-
-.cell[data-toggle='1'] {
-  color: #0687f5;
-}
-
-.cell-row {
-  height: 20px;
-}
-
-.next {
-  display: none;
 }
 
 body {
