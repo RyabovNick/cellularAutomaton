@@ -1,23 +1,72 @@
 <template>
   <v-container>
     <v-layout text-center wrap>
-      <v-flex mb-4>
-        <h1 class="display-2 font-weight-bold mb-3">Лес</h1>
-        <p>
-          <span
-            class="generation"
-          >{{ forest.dwellersCount}} {{forest.maws}} {{forest.lumber}} {{forest.month}}</span>,
-          <a href="#" @click="seed()">seed</a>
-        </p>
-        <p>{{ windowWidth }}</p>
-        <p>{{ forest.size }}</p>
+      <v-row class="mb-4">
+        <v-col cols="12">
+          <h1 class="display-2 font-weight-bold mb-3">Симуляция леса</h1>
 
-        <v-container>
+          <v-col cols="10" offset="1" sm="4" offset-sm="4">
+            <v-row justify="center">
+              <v-text-field
+                type="number"
+                v-model.number="speed"
+                label="Введите скорость выполнения (мс)"
+                class="max-width"
+              ></v-text-field>
+            </v-row>
+          </v-col>
+
+          <v-btn color="success" @click="seed()">Start simulation</v-btn>
+        </v-col>
+        <v-col cols="1" offset="2">
+          <v-row justify="end">
+            <v-img :src="require('../assets/bear_icon.svg')" contain height="18"></v-img>
+          </v-row>
+        </v-col>
+        <v-col cols="1">
+          <v-row justify="start">
+            <span>{{ forest.dwellersCount.bear }} ({{ forest.maws }})</span>
+          </v-row>
+        </v-col>
+
+        <v-col cols="1">
+          <v-row justify="end">
+            <v-img :src="require('../assets/lumberjack_icon1.svg')" contain height="18"></v-img>
+          </v-row>
+        </v-col>
+        <v-col cols="2">
+          <v-row justify="start">
+            <span>{{ forest.dwellersCount.lumberjack }} ({{ forest.lumber }})</span>
+          </v-row>
+        </v-col>
+
+        <v-col cols="1">
+          <v-row justify="end">
+            <v-img :src="require('../assets/tree11.svg')" contain height="18"></v-img>
+          </v-row>
+        </v-col>
+        <v-col cols="1">
+          <v-row justify="start">
+            <span>{{ forest.dwellersCount.tree }}</span>
+          </v-row>
+        </v-col>
+
+        <v-col cols="1">
+          <v-row justify="end">
+            <v-img :src="require('../assets/calendar.svg')" contain height="18"></v-img>
+          </v-row>
+        </v-col>
+        <v-col cols="1">
+          <v-row justify="start">
+            <span>{{ forest.month }}</span>
+          </v-row>
+        </v-col>
+        <v-container class="max-width">
           <div
             v-for="(tr, x) in forest.size"
             :key="x"
             :style="{
-              height: Math.round((windowWidth-200)/forest.size) + 'px'
+              height: Math.round((windowWidth - 200) / forest.size) + 'px',
             }"
           >
             <div
@@ -25,16 +74,17 @@
               :key="y"
               class="square"
               :style="{
-                width: Math.round((windowWidth-200)/forest.size) + 'px',
-                height: Math.round((windowWidth-200)/forest.size) + 'px',
-                'background-image': getBackgroundImage(x,y),
+                width: Math.round((windowWidth - 200) / forest.size) + 'px',
+                height: Math.round((windowWidth - 200) / forest.size) + 'px',
+                'background-image': getBackgroundImage(x, y),
                 'background-size': 'auto',
+                'background-position': 'center',
                 //'background-color': getColorForCell(x, y),
               }"
             ></div>
           </div>
         </v-container>
-      </v-flex>
+      </v-row>
     </v-layout>
   </v-container>
 </template>
@@ -47,11 +97,8 @@ export default Vue.extend({
   name: 'HelloWorld',
 
   data: () => ({
-    generation: 0,
-    x: 10,
-    y: 10,
     speed: 500,
-    forest: new Forest(20),
+    forest: new Forest(30),
     windowWidth: 0,
   }),
   created() {
@@ -60,14 +107,14 @@ export default Vue.extend({
   },
   methods: {
     handleResize() {
-      this.windowWidth = window.innerWidth
+      this.windowWidth = window.innerWidth > 1000 ? 1000 : window.innerWidth
     },
     seed(): void {
       if (this.forest.timer == null) {
         this.forest.timer = setInterval(() => {
           this.forest.step()
           // this.step().draw()
-        }, 800)
+        }, this.speed)
       }
     },
     getColorForCell(x: number, y: number): string {
@@ -114,5 +161,9 @@ export default Vue.extend({
 
 body {
   font-family: sans-serif;
+}
+
+.max-width {
+  max-width: 1000px;
 }
 </style>
